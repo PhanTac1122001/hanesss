@@ -110,6 +110,10 @@ def _validate(name: str, tool_input: object) -> None:
         raise ToolError("Tham số của tool phải là một đối tượng JSON.")
     props = next(s for s in TOOL_SCHEMAS if s["name"] == name)["input_schema"]
     required = props["required"]
+    unknown = [k for k in tool_input if k not in props["properties"]]
+    if unknown:
+        valid = ", ".join(props["properties"]) or "không có"
+        raise ToolError(f"Tham số không hợp lệ: '{unknown[0]}'. Tham số hợp lệ: {valid}.")
     for field, spec in props["properties"].items():
         py_type = int if spec["type"] == "integer" else str
         label = _TYPE_LABELS[py_type]
@@ -149,6 +153,7 @@ class DocTools:
                     True,
                 )
             _validate(name, tool_input)
+            tool_input = {k: v for k, v in tool_input.items() if v is not None}
             handler = getattr(self, f"_{name}")
             return done(handler(**tool_input), False)
         except ToolError as e:

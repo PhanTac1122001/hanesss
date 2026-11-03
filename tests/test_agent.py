@@ -26,7 +26,7 @@ class FakeClient:
     def _create(self, api, kwargs):
         self.calls.append((api, copy.deepcopy(kwargs)))
         item = self.script.pop(0)
-        if isinstance(item, Exception):
+        if isinstance(item, BaseException):
             raise item
         return item
 
@@ -362,3 +362,32 @@ def test_unmapped_api_error_still_aborts_cleanly(tmp_path):
               (tmp_path / "log.jsonl").read_text(encoding="utf-8").splitlines()]
     assert events[-1] == "question_end"
     assert agent.ask("tiếp").text == "vẫn chạy"
+
+
+def test_unexpected_exception_truncates_history_and_reraises(tmp_path):
+    agent, _ = make_agent(tmp_path, [
+        resp([tool_use("t1", "list_documents")], "tool_use"),
+        RuntimeError("hỏng"),
+        resp([text("ổn")]),
+    ])
+    before = len(agent.messages)
+    with pytest.raises(RuntimeError):
+        agent.ask("câu hỏi")
+    assert len(agent.messages) == before
+    assert agent.ask("tiếp").text == "ổn"
+    assert len(agent.messages) == before + 2
+
+
+def test_keyboard_interrupt_truncates_history(tmp_path):
+    agent, _ = make_agent(tmp_path, [KeyboardInterrupt()])
+    with pytest.raises(KeyboardInterrupt):
+        agent.ask("câu hỏi")
+    assert agent.messages == []
+
+
+def test_empty_final_text_uses_placeholder(tmp_path):
+    thinking = SimpleNamespace(type="thinking", thinking="...", signature="s")
+    agent, _ = make_agent(tmp_path, [resp([thinking])])
+    r = agent.ask("câu hỏi")
+    assert r.text == "(Mô hình không trả về nội dung văn bản.)"
+    assert r.error is None

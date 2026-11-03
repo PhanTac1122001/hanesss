@@ -47,6 +47,7 @@ FINAL_TURN_NOTICE = (
     "[HỆ THỐNG] Đây là lượt cuối cùng (giới hạn {max_turns} lượt). Không gọi thêm tool. "
     "Hãy trả lời ngay bằng thông tin đã thu thập; nếu chưa đủ, nói rõ phần nào còn thiếu."
 )
+EMPTY_ANSWER_TEXT = "(Mô hình không trả về nội dung văn bản.)"
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
 _RESULT_LOG_CHARS = 2000
@@ -137,6 +138,15 @@ class Agent:
         return f"Lỗi API không xác định ({type(e).__name__}): {e}. Vui lòng thử lại."
 
     def ask(self, question: str) -> AnswerResult:
+        start_len = len(self.messages)
+        try:
+            return self._ask(question)
+        except BaseException:
+            # Unhandled error / Ctrl-C: never leave a dangling user message or tool_use.
+            del self.messages[start_len:]
+            raise
+
+    def _ask(self, question: str) -> AnswerResult:
         max_turns = max(1, self.max_turns)
         self.question_count += 1
         self.logger.question_start(self.question_count, question)
@@ -196,6 +206,8 @@ class Agent:
                 text = "\n".join(
                     b.text for b in resp.content if getattr(b, "type", None) == "text"
                 ).strip()
+                if not text:
+                    text = EMPTY_ANSWER_TEXT
                 if resp.stop_reason == "max_tokens":
                     text += "\n\n(…câu trả lời bị cắt do giới hạn độ dài)"
                 if final:

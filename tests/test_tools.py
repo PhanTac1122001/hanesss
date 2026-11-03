@@ -114,3 +114,21 @@ def test_save_note_approved_and_duplicate(tmp_path):
 def test_save_note_fallback_name(tmp_path):
     r = make(tmp_path).execute("save_note", {"title": "!!!", "content": "x"})
     assert "notes/ghi-chu.md" in r.content
+
+
+def test_none_optional_param_is_dropped(tmp_path):
+    r = make(tmp_path).execute("search_documents", {"query": "hoàn học phí", "top_k": None})
+    assert not r.is_error
+    assert "chinh-sach-hoan-hoc-phi.md" in r.content
+
+
+def test_unknown_param_rejected(tmp_path):
+    r = make(tmp_path).execute("search_documents", {"query": "hoàn học phí", "extra": 1})
+    assert r.is_error
+    assert "Tham số không hợp lệ" in r.content and "'extra'" in r.content
+    assert "query, top_k" in r.content
+
+
+def test_unknown_param_on_no_arg_tool(tmp_path):
+    r = make(tmp_path).execute("list_documents", {"x": 1})
+    assert r.is_error and "không có" in r.content

@@ -10,6 +10,7 @@ import anthropic
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.markup import escape
 from rich.panel import Panel
 
 from harness import config
@@ -36,7 +37,8 @@ def console_approver(console: Console) -> Approver:
         title = tool_input.get("title", "")
         console.print(
             Panel(
-                f"Tool: {tool_name}\nTiêu đề: {title}\n\n{content}",
+                f"Tool: {escape(str(tool_name))}\nTiêu đề: {escape(str(title))}\n\n"
+                f"{escape(content)}",
                 title="Yêu cầu duyệt thao tác GHI",
                 border_style="yellow",
             )
@@ -154,9 +156,13 @@ def main(argv: list[str] | None = None) -> int:
             continue
         try:
             result = agent.ask(text)
+        except KeyboardInterrupt:
+            console.print("[yellow]Đã hủy câu hỏi. Phiên vẫn tiếp tục.[/yellow]")
+            continue
         except Exception as e:  # keep the session alive
+            detail = escape(f"{type(e).__name__}: {e}")
             console.print(
-                f"[red]Lỗi không mong muốn: {type(e).__name__}: {e}. Phiên vẫn tiếp tục.[/red]",
+                f"[red]Lỗi không mong muốn: {detail}. Phiên vẫn tiếp tục.[/red]",
                 highlight=False,
             )
             continue
