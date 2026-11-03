@@ -118,7 +118,7 @@ class Agent:
             )
         return self.client.messages.create(**kwargs)
 
-    def _api_error_message(self, e: Exception) -> str | None:
+    def _api_error_message(self, e: anthropic.APIError) -> str:
         """Map an SDK exception to a Vietnamese message (most specific first)."""
         if isinstance(e, anthropic.AuthenticationError):
             return "API key không hợp lệ hoặc chưa được cấu hình (ANTHROPIC_API_KEY)."
@@ -134,7 +134,7 @@ class Agent:
             return f"Lỗi máy chủ API ({e.status_code}). Vui lòng thử lại."
         if isinstance(e, anthropic.APIConnectionError):
             return "Không kết nối được tới API. Kiểm tra mạng rồi thử lại."
-        return None
+        return f"Lỗi API không xác định ({type(e).__name__}): {e}. Vui lòng thử lại."
 
     def ask(self, question: str) -> AnswerResult:
         max_turns = max(1, self.max_turns)
@@ -163,8 +163,6 @@ class Agent:
                 resp = self._create(final)
             except anthropic.APIError as e:
                 msg = self._api_error_message(e)
-                if msg is None:
-                    raise
                 self.logger.notice(msg, "error")
                 return abort(msg)
 

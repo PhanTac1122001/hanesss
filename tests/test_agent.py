@@ -343,3 +343,22 @@ def test_logger_quiet_modes(tmp_path):
     logger.notice("im lặng")
     assert console.export_text() == ""
     assert "im lặng" in (tmp_path / "log.jsonl").read_text(encoding="utf-8")
+
+
+def test_unmapped_api_error_still_aborts_cleanly(tmp_path):
+    err = anthropic.APIError("lạ", httpx.Request("POST", "https://x"), body=None)
+    agent, _ = make_agent(tmp_path, [
+        resp([tool_use("t1", "list_documents")], "tool_use"),
+        err,
+        resp([text("vẫn chạy")]),
+    ])
+    start_len = len(agent.messages)
+    r = agent.ask("câu hỏi")
+    assert r.error and "APIError" in r.error and r.text.startswith("⚠")
+    assert len(agent.messages) == start_len + 2
+    assert agent.messages[-2]["role"] == "user"
+    assert agent.messages[-1]["content"][0]["text"].startswith("[Không trả lời được")
+    events = [json.loads(x)["event"] for x in
+              (tmp_path / "log.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert events[-1] == "question_end"
+    assert agent.ask("tiếp").text == "vẫn chạy"
