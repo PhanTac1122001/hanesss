@@ -1,0 +1,10 @@
+{"id": "q01", "question": "Muốn tốt nghiệp cần điểm trung bình tích lũy tối thiểu bao nhiêu?", "must_include": [["6.5", "6,5"]], "source": "quy-che-hoc-vu.md"}
+{"id": "q02", "question": "Nếu rút học 3 ngày trước khai giảng thì được hoàn bao nhiêu phần trăm học phí?", "must_include": ["70%"], "source": "chinh-sach-hoan-hoc-phi.md"}
+{"id": "q03", "question": "Đi học muộn 20 phút thì bị tính như thế nào?", "must_include": [["0.5", "0,5", "nửa buổi"]], "source": "quy-dinh-diem-danh.md"}
+{"id": "q04", "question": "Học viên được bảo lưu tối đa bao lâu?", "must_include": ["6 tháng"], "source": "quy-trinh-bao-luu.md"}
+{"id": "q05", "question": "Phí thi lại một lần là bao nhiêu?", "must_include": [["300.000", "300,000", "300000", "300 nghìn"]], "source": "quy-che-hoc-vu.md"}
+{"id": "q06", "question": "Điều kiện để nhận học bổng khuyến học là gì và được bao nhiêu phần trăm?", "must_include": [["8.5", "8,5"], "30%"], "source": "chinh-sach-hoc-bong.md"}
+{"id": "q07", "question": "Vắng quá bao nhiêu phần trăm số buổi thì không được thi cuối môn?", "must_include": ["20%"], "source": "quy-dinh-diem-danh.md"}
+{"id": "q08", "question": "Học viên đạo văn bài tập lần thứ hai sẽ bị xử lý thế nào?", "must_include": ["đình chỉ"], "source": "noi-quy-lop-hoc.md"}
+{"id": "q09", "question": "Có được nhận cùng lúc học bổng khuyến học và học bổng tài năng không?", "must_include": [["không được cộng dồn", "không cộng dồn", "không được nhận cùng lúc", "không thể"]], "source": "chinh-sach-hoc-bong.md"}
+{"id": "q10", "question": "Học viện có ký túc xá cho học viên không?", "must_include": [["không tìm thấy", "không có thông tin", "chưa có thông tin", "không đề cập"]], "source": null}
