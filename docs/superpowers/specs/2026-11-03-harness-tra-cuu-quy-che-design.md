@@ -75,5 +75,5 @@ Luồng dữ liệu cho một câu hỏi: CLI → `Agent.ask(q)` → (API → lo
 1. Giới thiệu bài toán và cấu trúc repo (30 giây).
 2. Hỏi: "Nếu rút học 3 ngày trước khai giảng thì được hoàn bao nhiêu học phí, cần nộp giấy tờ gì?" → xem log từng lượt, tool, chi phí (60 giây).
 3. Hỏi tiếp: "Còn nếu đã học được 1 tuần thì sao?" → dùng lịch sử, log cho thấy `cache_read > 0` (45 giây).
-4. Gây lỗi: `/fault` rồi hỏi một câu → tool lỗi, mô hình tự xử lý tiếp. Sau đó `/maxturns 1` và hỏi một câu cần tra cứu → cảnh báo hết lượt (60 giây).
+4. Gây lỗi: `/fault` rồi hỏi một câu → tool lỗi, mô hình tự xử lý tiếp. Sau đó `/maxturns 2` và hỏi một câu cần tra cứu → tìm kiếm một lần rồi bị buộc trả lời từ thông tin đã có, hiện cảnh báo hết lượt (nếu lượt cuối vẫn đòi gọi tool thì hiện khung đỏ ⚠); sau demo chạy `/reset` và `/maxturns 6` (60 giây).
 5. Phần nâng cao: RAG (BM25), `save_note` có duyệt y/n, `python -m harness.eval` in độ chính xác và chi phí (60 giây).

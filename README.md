@@ -8,21 +8,46 @@ Giáo vụ và học viên của một học viện đào tạo CNTT (dữ liệ
 
 ## 2. Cài đặt và chạy
 
+Cần Python 3.12 và `anthropic>=2.4.0`. Chọn một trong các cách tạo môi trường ảo:
+
+**Windows PowerShell** (mỗi lệnh một dòng, không dùng `&&`):
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+Copy-Item .env.example .env
+```
+
+**Windows Git Bash**:
+
 ```bash
-# Tạo môi trường ảo (chọn một)
-uv venv && uv pip install -r requirements.txt
-# hoặc
-python -m venv .venv && .venv/Scripts/activate && pip install -r requirements.txt   # Windows
-# python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt   # macOS/Linux
+python -m venv .venv
+source .venv/Scripts/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
 
-cp .env.example .env        # rồi điền ANTHROPIC_API_KEY vào .env
+**macOS/Linux**:
 
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+Hoặc dùng `uv`: `uv venv` rồi `uv pip install -r requirements.txt`.
+
+Sau đó điền `ANTHROPIC_API_KEY` vào file `.env` và chạy:
+
+```bash
 python -m harness           # mở REPL hỏi đáp
 python -m harness.eval      # chạy bộ 10 câu hỏi kiểm thử
 python -m pytest -q         # chạy test (không gọi API thật)
 ```
 
-Cần Python 3.12 và `anthropic>=2.4.0`.
+Không muốn kích hoạt môi trường ảo thì gọi thẳng Python trong đó, ví dụ trên Windows: `.venv\Scripts\python -m harness` (macOS/Linux: `.venv/bin/python -m harness`).
 
 | Tùy chọn | Ý nghĩa |
 |----------|---------|
@@ -78,10 +103,10 @@ Vòng lặp agent cho một câu hỏi (`Agent.ask`):
 | 4 | Lịch sử | `Agent.messages` giữ suốt phiên, chỉ thêm vào cuối. Nội dung assistant (kể cả thinking) được gửi lại nguyên vẹn. `/reset` xóa lịch sử | `harness/agent.py`: `Agent.messages`, `Agent.reset`; `harness/cli.py`: `/reset` |
 | 5 | Cache | System prompt và tool cố định, `cache_control` trên khối system và cache tự động ở cấp request. Log in `cache_read`/`cache_write` mỗi lượt (màu xanh khi `cache_read > 0`) | `harness/agent.py`: `Agent._create`; `harness/logger.py`: `RunLogger.turn` |
 | 6 | Observability | Mỗi lượt: số lượt, `stop_reason`, token in/out/cache read/cache write, chi phí. Mỗi tool call: tên, input, kết quả, thời gian ms, lỗi. Cuối câu hỏi: tổng chi phí. Mọi sự kiện ghi thêm vào `logs/session-*.jsonl` | `harness/logger.py`: `RunLogger.turn/tool_call/question_end/_write`; `harness/pricing.py`: `cost_usd` |
-| 7 | Xử lý lỗi | Lỗi tool (tên lạ, input sai, `ToolError`, exception bất kỳ) trả `is_error=true` rồi vòng lặp chạy tiếp. Lỗi API, refusal, `max_tokens` giữa `tool_use`: thông báo tiếng Việt, rollback lịch sử về trước câu hỏi rồi thêm cặp user/assistant tổng hợp, phiên không dừng | `harness/tools.py`: `DocTools.execute`, `_validate`; `harness/agent.py`: `Agent._api_error_message`, `Agent._abort` |
+| 7 | Xử lý lỗi | Lỗi tool (tên lạ, input sai, `ToolError`, exception bất kỳ) trả `is_error=true` rồi vòng lặp chạy tiếp. Lỗi API, refusal, `max_tokens` giữa `tool_use`: thông báo tiếng Việt, rollback lịch sử về trước câu hỏi rồi thêm cặp user/assistant tổng hợp, phiên không dừng. Exception bất ngờ hoặc Ctrl-C giữa câu hỏi: lịch sử được cắt về trước câu hỏi, REPL tiếp tục | `harness/tools.py`: `DocTools.execute`, `_validate`; `harness/agent.py`: `Agent._api_error_message`, `Agent._abort` |
 | Nâng cao | RAG | Chunk theo heading Markdown, token hóa không dấu + bigram, chấm điểm BM25 thuần Python | `harness/rag.py`: `chunk_markdown`, `BM25Index.search`, `build_index` |
 | Nâng cao | Duyệt trước khi ghi | `save_note` gọi `approver` trước khi ghi file; từ chối thì không ghi gì. REPL hỏi y/n; eval luôn từ chối | `harness/tools.py`: `DocTools._save_note`; `harness/cli.py`: `console_approver`; `harness/eval.py`: `approver=lambda *_: False` |
-| Nâng cao | Bộ kiểm thử | 70 test không gọi API thật (client giả). Bộ eval 10 câu (gồm 1 câu không có trong tài liệu), chấm theo từ khóa bỏ dấu, đo thêm "retrieval hit" | `tests/`; `harness/eval.py`: `grade`, `retrieval_hit`, `main` |
+| Nâng cao | Bộ kiểm thử | 77 test không gọi API thật (client giả). Bộ eval 10 câu (gồm 1 câu không có trong tài liệu), chấm theo từ khóa bỏ dấu, đo thêm "retrieval hit" | `tests/`; `harness/eval.py`: `grade`, `retrieval_hit`, `main` |
 | Thêm | Giả lập lỗi để demo | `/fault` làm lần gọi tool kế tiếp ném `RuntimeError` | `harness/tools.py`: `DocTools.fault_next`; `harness/cli.py`: `_handle_command` |
 | Thêm | Fallback khi refusal | Dùng `client.beta.messages.create(..., betas=["server-side-fallback-2026-07-01"], fallbacks="default")`; chi phí tính theo `response.model` (model thực sự trả lời). Tắt bằng `--no-fallbacks` | `harness/agent.py`: `Agent._create`, `FALLBACK_BETA`; `harness/cli.py`: `--no-fallbacks` |
 
@@ -104,20 +129,22 @@ Console (câu hỏi 2, dùng lịch sử, `cache_read > 0`):
 
 ```
 ──────────────────────── Câu hỏi #2 ────────────────────────
-Lượt 1/6 · stop=tool_use · in=412 out=96 cache_read=3180 cache_write=640 · $0.00263
+Lượt 1/6 · stop=tool_use · in=412 out=96 cache_read=3180 cache_write=640 · $0.00402
   ↳ tool search_documents {"query":"hoàn học phí đã học 1 tuần"}
-    [chinh-sach-hoan-hoc-phi.md#2] chinh-sach-hoan-hoc-phi.md › Mức hoàn học phí (điểm 7.41)
+    [chinh-sach-hoan-hoc-phi.md#2] chinh-sach-hoan-hoc-phi.md › Chính sách hoàn học phí › Mức hoàn học phí (điểm 12.25)
     … (3 ms)
-Lượt 2/6 · stop=end_turn · in=1350 out=210 cache_read=3820 cache_write=0 · $0.00560
+Lượt 2/6 · stop=end_turn · in=1350 out=210 cache_read=3820 cache_write=0 · $0.00556
 Số lượt: 2 · Số tool call: 1 · Tokens: in=1762 out=306 cache_read=7000 cache_write=640
-Chi phí câu hỏi: $0.00823 · Cache hit: có
+Chi phí câu hỏi: $0.00958 · Cache hit: có
 ```
 
 Một dòng trong `logs/session-*.jsonl` (mỗi sự kiện một dòng JSON):
 
 ```json
-{"ts": "2026-11-03T09:15:02+00:00", "event": "turn", "turn": 1, "max_turns": 6, "stop_reason": "tool_use", "model": "claude-sonnet-5-5", "final_turn": false, "input_tokens": 412, "output_tokens": 96, "cache_read": 3180, "cache_write": 640, "cost_usd": 0.00263}
+{"ts": "2026-11-03T09:15:02+00:00", "event": "turn", "turn": 1, "max_turns": 6, "stop_reason": "tool_use", "model": "claude-sonnet-5-5", "final_turn": false, "input_tokens": 412, "output_tokens": 96, "cache_read": 3180, "cache_write": 640, "cost_usd": 0.00402}
 ```
+
+Chi phí mỗi lượt theo `harness/pricing.py` (claude-sonnet-5-5: $2 in / $10 out / $0.20 cache_read / $2.50 cache_write mỗi triệu token). Ví dụ lượt 1: (412×2 + 96×10 + 3180×0,2 + 640×2,5) / 1.000.000 = $0,00402.
 
 Các loại sự kiện: `question_start`, `turn`, `tool_call`, `notice`, `question_end`.
 
@@ -130,7 +157,7 @@ Các loại sự kiện: `question_start`, `turn`, `tool_call`, `notice`, `quest
 3. **Câu hỏi nối tiếp (45 giây).** Gõ:
    `Còn nếu đã học được 1 tuần thì sao?`
    Mô hình dùng lịch sử; log cho thấy `cache_read > 0` và "Cache hit: có".
-4. **Gây lỗi (60 giây).** Gõ `/fault` rồi hỏi một câu bất kỳ về quy chế: tool lỗi (`LỖI:` màu đỏ), mô hình tự xử lý tiếp. Sau đó gõ `/maxturns 1` và hỏi một câu cần tra cứu: hiện cảnh báo "Đã dùng hết 1 lượt…".
+4. **Gây lỗi (60 giây).** Gõ `/fault` rồi hỏi một câu bất kỳ về quy chế: tool lỗi (`LỖI:` màu đỏ), mô hình tự xử lý tiếp. Sau đó gõ `/maxturns 2` và hỏi một câu cần tra cứu: mô hình tìm kiếm một lần, rồi bị buộc trả lời bằng thông tin đã thu thập và hiện cảnh báo "Đã dùng hết 2 lượt…". Nếu ở lượt cuối mô hình vẫn đòi gọi tool thì hiện khung đỏ có ký hiệu ⚠ (hủy câu hỏi, lịch sử được hoàn nguyên). Xong demo, gõ `/reset` rồi `/maxturns 6` trước khi làm tiếp.
 5. **Phần nâng cao (60 giây).** Giới thiệu RAG BM25 (`harness/rag.py`); yêu cầu "hãy lưu ghi chú tóm tắt mức hoàn học phí" để thấy bảng duyệt `save_note` y/n; thoát REPL rồi chạy `python -m harness.eval` để in độ chính xác, retrieval hit và tổng chi phí.
 
 ## 8. Thay bằng tài liệu thật
